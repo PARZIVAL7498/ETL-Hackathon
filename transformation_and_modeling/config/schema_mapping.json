@@ -1,0 +1,25 @@
+{
+  "bronze_schema": {
+    "transactions": [
+      { "name": "id", "type": "integer" },
+      { "name": "category", "type": "string" },
+      { "name": "value", "type": "float" },
+      { "name": "timestamp", "type": "datetime" }
+    ]
+  },
+  "silver_schema": {
+    "transactions": [
+      { "name": "id", "type": "integer" },
+      { "name": "category", "type": "string" },
+      { "name": "value", "type": "float" },
+      { "name": "timestamp", "type": "datetime" }
+    ]
+  },
+  "gold_schema": {
+    "daily_aggregates": [
+      { "name": "date", "type": "date" },
+      { "name": "category", "type": "string" },
+      { "name": "total_value", "type": "double" }
+    ]
+  }
+}
