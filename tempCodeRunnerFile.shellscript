@@ -1,0 +1,13 @@
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=password
+DB_NAME=etl_db
+API_KEY=your_api_key_here
+RAW_ZONE_PATH=raw_zone
+AWS_ACCESS_KEY_ID=your_aws_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
+AWS_REGION=us-east-1
+S3_BUCKET=your_s3_bucket
+GCP_PROJECT=your_gcp_project
+GCS_BUCKET=your_gcs_bucket
