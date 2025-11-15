@@ -1,0 +1,19 @@
+{
+    "source_system": "salesforce",
+    "source_entity": "opportunities",
+    "ingestion_type": "api",
+    "url": "https://YOUR_SALESFORCE_INSTANCE.salesforce.com/services/data/v57.0/query/?q=SELECT+Id,Name,Amount,CloseDate+FROM+Opportunity",
+    "headers": {
+        "Authorization": "Bearer YOUR_SALESFORCE_ACCESS_TOKEN",
+        "Content-Type": "application/json"
+    },
+    "timeout": 30,
+    "database": {
+        "host": "YOUR_DATABASE_HOST",
+        "port": 5432,
+        "user": "YOUR_DATABASE_USER",
+        "password": "YOUR_DATABASE_PASSWORD",
+        "dbname": "YOUR_DATABASE_NAME"
+    },
+    "query": "SELECT * FROM opportunities WHERE created_date > NOW() - INTERVAL '1 day'"
+}

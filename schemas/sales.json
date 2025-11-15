@@ -1,0 +1,9 @@
+{
+    "type": "object",
+    "properties": {
+        "product_id": {"type": "number"},
+        "quantity": {"type": "number"},
+        "price": {"type": "number"}
+    },
+    "required": ["product_id", "quantity", "price"]
+}
