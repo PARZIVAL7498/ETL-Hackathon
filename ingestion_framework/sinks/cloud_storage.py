@@ -2,12 +2,12 @@ import logging
 
 try:
     import boto3
-except ImportError:
+except Exception:
     boto3 = None
 
 try:
     from google.cloud import storage
-except ImportError:
+except Exception:
     storage = None
 
 from ingestion_framework.core.config import settings
@@ -16,80 +16,57 @@ from ingestion_framework.utils.logger import get_logger
 logger = get_logger(__name__)
 
 class CloudStorage:
-    def __init__(self, storage_type="s3"):
-        self.storage_type = storage_type
-        
-        if storage_type == "s3":
+    def __init__(self, storage_type: str = "s3"):
+        self.storage_type = storage_type.lower()
+        if self.storage_type == "s3":
             if not boto3:
-                raise ImportError("boto3 is not installed. Install with: pip install boto3")
-            
-            if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY:
-                raise ValueError("AWS credentials not configured in .env file")
-            
+                raise ImportError("boto3 not installed. pip install boto3")
+            if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY or not settings.S3_BUCKET:
+                raise ValueError("AWS credentials or S3_BUCKET missing in .env")
             self.client = boto3.client(
                 "s3",
                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
                 region_name=settings.AWS_REGION,
             )
-            logger.info(f"Initialized S3 client for bucket: {settings.S3_BUCKET}")
-            
-        elif storage_type == "gcs":
+            logger.info(f"Initialized S3 client for bucket {settings.S3_BUCKET}")
+        elif self.storage_type == "gcs":
             if not storage:
-                raise ImportError("google-cloud-storage is not installed. Install with: pip install google-cloud-storage")
-            
-            if not settings.GCP_PROJECT:
-                raise ValueError("GCP_PROJECT not configured in .env file")
-            
+                raise ImportError("google-cloud-storage not installed. pip install google-cloud-storage")
+            if not settings.GCP_PROJECT or not settings.GCS_BUCKET:
+                raise ValueError("GCP_PROJECT or GCS_BUCKET missing in .env")
             self.client = storage.Client(project=settings.GCP_PROJECT)
-            logger.info(f"Initialized GCS client for bucket: {settings.GCS_BUCKET}")
-            
+            logger.info(f"Initialized GCS client for bucket {settings.GCS_BUCKET}")
         else:
-            raise ValueError(f"Unsupported storage type: {storage_type}. Use 's3' or 'gcs'")
+            raise ValueError("Unsupported storage_type. Use 's3' or 'gcs'")
 
-    def write(self, data, key):
-        """Write data to cloud storage"""
+    def write(self, data: bytes | str, key: str):
         try:
+            if isinstance(data, str):
+                body = data.encode("utf-8")
+            else:
+                body = data
             if self.storage_type == "s3":
-                if not settings.S3_BUCKET:
-                    raise ValueError("S3_BUCKET not configured in .env file")
-                
-                self.client.put_object(
-                    Bucket=settings.S3_BUCKET,
-                    Key=key,
-                    Body=data if isinstance(data, bytes) else data.encode()
-                )
-                logger.info(f"✅ Uploaded to S3: s3://{settings.S3_BUCKET}/{key}")
-                
-            elif self.storage_type == "gcs":
-                if not settings.GCS_BUCKET:
-                    raise ValueError("GCS_BUCKET not configured in .env file")
-                
+                self.client.put_object(Bucket=settings.S3_BUCKET, Key=key, Body=body)
+                logger.info(f"Uploaded to s3://{settings.S3_BUCKET}/{key}")
+            else:
                 bucket = self.client.bucket(settings.GCS_BUCKET)
                 blob = bucket.blob(key)
-                blob.upload_from_string(data)
-                logger.info(f"✅ Uploaded to GCS: gs://{settings.GCS_BUCKET}/{key}")
-                
+                blob.upload_from_string(body)
+                logger.info(f"Uploaded to gs://{settings.GCS_BUCKET}/{key}")
         except Exception as e:
-            logger.error(f"❌ Upload failed: {e}")
+            logger.error(f"Upload failed: {e}")
             raise
 
-    def read(self, key):
-        """Read data from cloud storage"""
+    def read(self, key: str) -> bytes:
         try:
             if self.storage_type == "s3":
-                response = self.client.get_object(Bucket=settings.S3_BUCKET, Key=key)
-                data = response['Body'].read()
-                logger.info(f"✅ Downloaded from S3: {key}")
-                return data
-                
-            elif self.storage_type == "gcs":
+                resp = self.client.get_object(Bucket=settings.S3_BUCKET, Key=key)
+                return resp["Body"].read()
+            else:
                 bucket = self.client.bucket(settings.GCS_BUCKET)
                 blob = bucket.blob(key)
-                data = blob.download_as_bytes()
-                logger.info(f"✅ Downloaded from GCS: {key}")
-                return data
-                
+                return blob.download_as_bytes()
         except Exception as e:
-            logger.error(f"❌ Download failed: {e}")
+            logger.error(f"Download failed: {e}")
             raise

@@ -2,7 +2,7 @@ requests
 psycopg2-binary
 apache-airflow==2.7.0
 apache-airflow-providers-bash==3.14.0
-pydantic==2.0.0
+pydantic==2.5.0
 tenacity==8.2.3
 psycopg2-binary==2.9.9
 requests==2.31.0
@@ -10,3 +10,10 @@ jsonschema==4.20.0
 python-dotenv==1.0.0
 boto3==1.28.85
 google-cloud-storage==2.9.0
+kafka-python==2.0.2
+fastapi==0.109.0
+uvicorn==0.27.0
+python-multipart==0.0.6
+PyPDF2==4.0.1
+dateparser==1.1.8
+openai==0.28.0

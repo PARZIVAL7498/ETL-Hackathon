@@ -1,48 +1,42 @@
 import os
-from datetime import datetime
 import json
+from datetime import datetime
 from ingestion_framework.core.config import settings
 from ingestion_framework.utils.logger import get_logger
-from ingestion_framework.utils.metadata import create_metadata, write_metadata
 
 logger = get_logger(__name__)
 
 class RawLayer:
-    def __init__(self, source_system, source_entity):
+    def __init__(self, source_system: str, source_entity: str):
         self.source_system = source_system
         self.source_entity = source_entity
-        self.raw_zone_path = settings.RAW_ZONE_PATH
-        self._ensure_directory_exists()
+        self.raw_zone = settings.RAW_ZONE_PATH or "raw_zone"
+        os.makedirs(self.raw_zone, exist_ok=True)
 
-    def _ensure_directory_exists(self):
-        if not os.path.exists(self.raw_zone_path):
-            os.makedirs(self.raw_zone_path)
-            logger.info(f"Created raw zone directory: {self.raw_zone_path}")
-
-    def write(self, data, ingestion_timestamp):
+    def write(self, data, ingestion_timestamp: datetime):
+        filename = f"{self.source_system}_{self.source_entity}_{ingestion_timestamp.strftime('%Y%m%d_%H%M%S')}.json"
+        file_path = os.path.join(self.raw_zone, filename)
         try:
-            filename = f"{self.source_system}_{self.source_entity}_{ingestion_timestamp.strftime('%Y%m%d_%H%M%S')}.json"
-            file_path = os.path.join(self.raw_zone_path, filename)
-            
-            with open(file_path, "w") as f:
-                if isinstance(data, str):
-                    f.write(data)
+            with open(file_path, "w", encoding="utf-8") as f:
+                if isinstance(data, (str, bytes)):
+                    if isinstance(data, bytes):
+                        f.write(data.decode("utf-8"))
+                    else:
+                        f.write(data)
                 else:
-                    json.dump(data, f, indent=2)
-            
-            # Write metadata
-            metadata = create_metadata(
-                self.source_system,
-                self.source_entity,
-                ingestion_timestamp,
-                file_path
-            )
-            metadata_path = file_path.replace(".json", "_metadata.json")
-            write_metadata(metadata, metadata_path)
-            
-            logger.info(f"Data written to raw layer: {file_path}")
+                    json.dump(data, f, indent=2, default=str)
+            # metadata
+            metadata = {
+                "source_system": self.source_system,
+                "source_entity": self.source_entity,
+                "ingestion_timestamp": ingestion_timestamp.isoformat(),
+                "file_path": file_path
+            }
+            meta_path = file_path.replace(".json", "_metadata.json")
+            with open(meta_path, "w", encoding="utf-8") as mf:
+                json.dump(metadata, mf, indent=2)
+            logger.info(f"Wrote raw data to {file_path}")
             return file_path
-            
         except Exception as e:
-            logger.error(f"Failed to write to raw layer: {e}")
+            logger.error(f"Failed to write raw file: {e}")
             raise
