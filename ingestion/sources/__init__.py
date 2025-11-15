@@ -21,15 +21,3 @@ def __getattr__(name):
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 __all__ = ["APIIngestion", "DatabaseIngestion", "FileSystemIngestion"]
-
-"""
-File system ingestion module
-"""
-
-class FileSystemIngestion:
-    def __init__(self):
-        pass
-
-    def ingest(self, path):
-        # Implement file system ingestion logic here
-        pass

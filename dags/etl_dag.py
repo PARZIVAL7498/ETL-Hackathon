@@ -1,44 +1,46 @@
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.operators.bash import BashOperator
+from airflow.providers.apache.bash.operators.bash import BashOperator
+from airflow.utils.dates import days_ago
+from pydantic import BaseSettings  # ❌ Deprecated in Pydantic v2.5.0
 
-# Add project root to Python path
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, PROJECT_ROOT)
+default_args = {
+    'owner': 'etl-team',
+    'start_date': days_ago(1),
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
 
-with DAG(
-    dag_id="etl_pipeline",
-    start_date=datetime(2025, 11, 15),
-    schedule_interval="@daily",
+dag = DAG(
+    'etl_pipeline',
+    default_args=default_args,
+    description='ETL Pipeline: Ingest -> Process -> Load',
+    schedule_interval='@daily',
     catchup=False,
-    tags=["etl", "hackathon"],
-    owner="etl_team",
-    description="ETL pipeline for Salesforce data ingestion",
-) as dag:
-    ingest_task = BashOperator(
-        task_id="ingest",
-        bash_command=f"cd {PROJECT_ROOT} && python ingestion/main.py ingestion/configs/salesforce_opportunities.json",
-        retries=2,
-        retry_delay=60,
-        doc="Ingest data from Salesforce API",
-    )
+)
 
-    process_task = BashOperator(
-        task_id="process",
-        bash_command=f"cd {PROJECT_ROOT} && python ingestion_service/app/services/classification_service.py raw_zone/salesforce_opportunities.json processed_zone/salesforce_opportunities.json",
-        retries=2,
-        retry_delay=60,
-        doc="Process and classify ingested data",
-    )
+# Task 1: Ingest data
+ingest_task = BashOperator(
+    task_id='ingest_data',
+    bash_command='cd /path/to/project && python ingestion/main.py ingestion/configs/salesforce_opportunities.json',
+    dag=dag,
+)
 
-    load_task = BashOperator(
-        task_id="load",
-        bash_command=f"cd {PROJECT_ROOT} && python ingestion/load_to_cloud.py processed_zone/salesforce_opportunities.json",
-        retries=1,
-        retry_delay=60,
-        doc="Load processed data to cloud storage",
-    )
+# Task 2: Process data
+process_task = BashOperator(
+    task_id='process_data',
+    bash_command='cd /path/to/project && python ingestion_service/app/services/classification_service.py raw_zone/salesforce_opportunities.json processed_zone/salesforce_opportunities_processed.json',
+    dag=dag,
+)
 
-    ingest_task >> process_task >> load_task
+# Task 3: Load to cloud
+load_task = BashOperator(
+    task_id='load_to_cloud',
+    bash_command='cd /path/to/project && python ingestion/load_to_cloud.py',
+    dag=dag,
+)
+
+# Define dependencies
+ingest_task >> process_task >> load_task

@@ -3,7 +3,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 SCHEMAS_DIR = os.path.join(os.path.dirname(__file__), "schemas")
-os.makedirs(SCHEMAS_DIR, exist_ok=True)
+os.makedirs(SCHEMAS_DIR, exist_ok=True)  # ✅ Ensure directory exists
 
 TYPE_MAP = {
     "int": "integer",
@@ -65,6 +65,8 @@ def _schema_version_path(source: str, entity: str, version: int) -> str:
     return os.path.join(SCHEMAS_DIR, fn)
 
 def load_latest_schema(source: str, entity: str) -> Optional[Dict]:
+    if not os.path.exists(SCHEMAS_DIR):  # ✅ Check before listing
+        return None
     files = [f for f in os.listdir(SCHEMAS_DIR) if f.startswith(f"{source}__{entity}__v")]
     if not files:
         return None

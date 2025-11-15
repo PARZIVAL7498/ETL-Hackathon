@@ -12,6 +12,7 @@ except Exception:
 
 from ingestion_framework.core.config import settings
 from ingestion_framework.utils.logger import get_logger
+from typing import Union
 
 logger = get_logger(__name__)
 
@@ -40,7 +41,7 @@ class CloudStorage:
         else:
             raise ValueError("Unsupported storage_type. Use 's3' or 'gcs'")
 
-    def write(self, data: bytes | str, key: str):
+    def write(self, data: Union[bytes, str], key: str):
         try:
             if isinstance(data, str):
                 body = data.encode("utf-8")

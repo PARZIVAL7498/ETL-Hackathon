@@ -6,9 +6,12 @@ from typing import Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 try:
-    import openai
+    from openai import OpenAI  # ✅ New syntax for openai>=1.0.0
 except ImportError:
-    openai = None
+    try:
+        import openai  # Fallback for older versions
+    except ImportError:
+        openai = None
 
 class LLMQueryAdapter:
     """
@@ -24,7 +27,15 @@ class LLMQueryAdapter:
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY not set in environment")
         
-        openai.api_key = self.api_key
+        # ✅ Use new OpenAI client
+        try:
+            self.client = OpenAI(api_key=self.api_key)
+        except Exception:
+            # Fallback for older API
+            import openai
+            openai.api_key = self.api_key
+            self.client = None
+        
         self.model = model
         self.max_tokens = 500
 
@@ -64,16 +75,32 @@ SQL: SELECT * FROM products ORDER BY price DESC LIMIT 5;
 """
         
         try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": nl_query}
-                ],
-                max_tokens=self.max_tokens,
-                temperature=0.2,  # Low temp for deterministic output
-            )
-            sql = response["choices"][0]["message"]["content"].strip()
+            if self.client:
+                # ✅ New API style
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": nl_query}
+                    ],
+                    max_tokens=self.max_tokens,
+                    temperature=0.2,
+                )
+                sql = response.choices[0].message.content.strip()
+            else:
+                # Fallback for old API
+                import openai
+                response = openai.ChatCompletion.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": nl_query}
+                    ],
+                    max_tokens=self.max_tokens,
+                    temperature=0.2,
+                )
+                sql = response["choices"][0]["message"]["content"].strip()
+            
             logger.info(f"Generated SQL: {sql}")
             return sql
         except Exception as e:
@@ -171,7 +198,7 @@ class QueryExecutor:
     def _execute_postgres(self, query: str) -> List[Dict]:
         try:
             import psycopg2
-            from psycopg2.extras import RealDictCursor
+            from psycopg2.extras import RealDictCursor  # ✅ Add this
         except ImportError:
             raise ImportError("psycopg2 not installed")
         
@@ -185,7 +212,7 @@ class QueryExecutor:
                 connect_timeout=self.timeout,
             )
             # Use cursor factory to get dict-like rows and use context managers to ensure cleanup
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:  # ✅ Use context manager
                 cur.execute(query)
                 rows = cur.fetchmany(self.max_rows)
                 result = [dict(r) for r in rows]
