@@ -1,0 +1,22 @@
+02:49:15.374 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8458
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+02:49:16.697 | INFO    | Flow run 'vivacious-walrus' - Beginning flow run 'vivacious-walrus' for flow 'ETL Pipeline - simple'
+02:49:16.698 | INFO    | Flow run 'vivacious-walrus' - === Starting simple ETL pipeline ===
+02:49:16.726 | INFO    | Task run 'Ingest (mock)-660' - 🔵 Ingest: ensuring at least one input file exists in raw_zone
+02:49:16.726 | INFO    | Task run 'Ingest (mock)-660' - Found existing input: /Users/pakshaljain/Desktop/ETL-Hackathon/raw_zone/mock.json
+02:49:16.726 | INFO    | Task run 'Ingest (mock)-660' - Finished in state Completed()
+02:49:16.747 | INFO    | Task run 'Validate-815' - 🔵 Validate: listing JSON files in raw_zone
+02:49:16.748 | INFO    | Task run 'Validate-815' - Found 3 files
+02:49:16.749 | INFO    | Task run 'Validate-815' - Finished in state Completed()
+02:49:16.764 | INFO    | Task run 'Process-588' - 🔵 Process: transform first validated file
+02:49:16.764 | INFO    | Task run 'Process-588' - Reading input: /Users/pakshaljain/Desktop/ETL-Hackathon/raw_zone/mock.json
+/Users/pakshaljain/Desktop/ETL-Hackathon/dags/etl_dag.py:64: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "processed_at": datetime.utcnow().isoformat() + "Z",
+02:49:16.765 | INFO    | Task run 'Process-588' - Wrote processed file: /Users/pakshaljain/Desktop/ETL-Hackathon/processed_zone/mock_processed.json
+02:49:16.765 | INFO    | Task run 'Process-588' - Finished in state Completed()
+02:49:16.779 | INFO    | Task run 'Load (simulate)-fdb' - 🔵 Load: simulate uploading processed file
+02:49:16.780 | INFO    | Task run 'Load (simulate)-fdb' - Simulated load: copied /Users/pakshaljain/Desktop/ETL-Hackathon/processed_zone/mock_processed.json -> /Users/pakshaljain/Desktop/ETL-Hackathon/processed_zone/loaded/mock_processed.json
+02:49:16.780 | INFO    | Task run 'Load (simulate)-fdb' - Finished in state Completed()
+02:49:16.780 | INFO    | Flow run 'vivacious-walrus' - === ETL finished ===
+02:49:16.787 | INFO    | Flow run 'vivacious-walrus' - Finished in state Completed()
+02:49:16.793 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8458

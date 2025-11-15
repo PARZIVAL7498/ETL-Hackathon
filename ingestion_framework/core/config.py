@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings  # ✅ Correct for Pydantic v2
+from pydantic_settings import BaseSettings
 from pydantic import Field
 from typing import Optional
 
@@ -38,8 +38,10 @@ class Settings(BaseSettings):
     MIGRATION_TARGET: str = Field("postgres", env="MIGRATION_TARGET")  # or "mongo"
     POSTGRES_TABLE_NAME: Optional[str] = Field(None, env="POSTGRES_TABLE_NAME")
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # allow or ignore unexpected env variables so API_KEY won't break startup
+    model_config = {
+        "env_file": ".env",
+        "extra": "ignore",   # use "allow" if you want unknown fields available
+    }
 
 settings = Settings()

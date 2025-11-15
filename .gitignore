@@ -1,0 +1,4 @@
+nifi_flow/*.xml.backup
+nifi_flow/sensitive/
+*.credentials
+.env

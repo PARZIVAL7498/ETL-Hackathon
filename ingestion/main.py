@@ -1,29 +1,23 @@
+"""
+Main ingestion module
+"""
+
 import sys
-import json
+from pathlib import Path
+
+# Add project root to path
+PROJECT_ROOT = str(Path(__file__).parent.parent)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+# Now use absolute imports
 from ingestion.sources.api import APIIngestion
-from ingestion_framework.utils.logger import get_logger
+from ingestion.base import BaseIngestion
 
-logger = get_logger(__name__)
+def main():
+    """Run ingestion"""
+    print("Starting ingestion...")
+    # Your ingestion logic here
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        logger.error("Usage: python main.py <config_file>")
-        sys.exit(1)
-
-    config_file = sys.argv[1]
-    with open(config_file, "r") as f:
-        config = json.load(f)
-
-    ingestion_type = config.get("ingestion_type", "api")
-    
-    if ingestion_type == "api":
-        ingestion = APIIngestion(
-            config["source_system"],
-            config["source_entity"],
-            config
-        )
-    else:
-        logger.error(f"Unsupported ingestion type: {ingestion_type}")
-        sys.exit(1)
-
-    ingestion.ingest()
+if __name__ == '__main__':
+    main()

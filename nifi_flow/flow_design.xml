@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<flowController>
+  <name>ETL-Hackathon Flow</name>
+  <description>Data ingestion and processing pipeline</description>
+  <version>1.0.0</version>
+  
+  <!-- Process Group: Data Ingestion -->
+  <processGroup>
+    <name>Data Ingestion</name>
+    <comment>Reads from raw zone and validates data</comment>
+    
+    <!-- Processor: List Files -->
+    <processor>
+      <name>List Raw Files</name>
+      <type>org.apache.nifi.processors.standard.ListFile</type>
+      <config>
+        <property name="Input Directory">raw_zone/</property>
+        <property name="File Filter">.*.json</property>
+      </config>
+    </processor>
+    
+    <!-- Processor: Read Files -->
+    <processor>
+      <name>Read JSON Files</name>
+      <type>org.apache.nifi.processors.standard.FetchFile</type>
+      <incomingConnection from="List Raw Files"/>
+    </processor>
+    
+    <!-- Processor: Validate Data -->
+    <processor>
+      <name>Validate Schema</name>
+      <type>org.apache.nifi.processors.standard.ValidateJson</type>
+      <incomingConnection from="Read JSON Files"/>
+    </processor>
+  </processGroup>
+  
+  <!-- Process Group: Data Processing -->
+  <processGroup>
+    <name>Data Processing</name>
+    <comment>Transforms and enriches data</comment>
+  </processGroup>
+  
+</flowController>

@@ -1,0 +1,80 @@
+import os
+from datetime import datetime, timedelta
+
+# Try to import Airflow components; provide lightweight fallbacks for linting/tests when Airflow isn't installed.
+try:
+    from airflow import DAG
+    from airflow.operators.bash import BashOperator
+    from airflow.utils.dates import days_ago
+except Exception:
+    try:
+        from airflow.models import DAG
+        from airflow.operators.bash import BashOperator
+        from airflow.utils.dates import days_ago
+    except Exception:
+        class DAG:
+            def __init__(self, *args, **kwargs):
+                pass
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        class BashOperator:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        def days_ago(n):
+            return datetime.utcnow() - timedelta(days=n)
+
+# Get project root from environment or config
+PROJECT_ROOT = os.getenv('AIRFLOW_PROJECT_ROOT', '/Users/pakshaljain/Desktop/ETL-Hackathon')
+
+default_args = {
+    'owner': 'etl-team',
+    'retries': 3,
+    'retry_delay': timedelta(minutes=5),
+    'email_on_failure': True,
+    'email': ['support@example.com'],
+}
+
+with DAG(
+    'etl_pipeline',
+    default_args=default_args,
+    schedule_interval='0 2 * * *',
+    catchup=False,
+    start_date=days_ago(1),
+    description='ETL Pipeline: Ingest, Process, Load',
+) as dag:
+    
+    # Task 1: Ingest data
+    ingest_task = BashOperator(
+        task_id='ingest_data',
+        bash_command=f'''
+        cd {PROJECT_ROOT} && \
+        python ingestion/main.py ingestion/configs/mock.txt
+        ''',
+    )
+
+    # Task 2: Process data
+    process_task = BashOperator(
+        task_id='process_data',
+        bash_command=f'''
+        cd {PROJECT_ROOT} && \
+        python ingestion_service/app/services/classification_service.py \
+        {PROJECT_ROOT}/raw_zone/mock.json \
+        {PROJECT_ROOT}/processed_zone/mock_processed.json
+        ''',
+    )
+
+    # Task 3: Load to cloud
+    load_task = BashOperator(
+        task_id='load_to_cloud',
+        bash_command=f'''
+        cd {PROJECT_ROOT} && \
+        python ingestion/load_to_cloud.py
+        ''',
+    )
+
+    # Define dependencies
+    ingest_task >> process_task >> load_task

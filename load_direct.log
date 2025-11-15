@@ -1,0 +1,1 @@
+2025-11-16 02:42:24 - __main__ - ERROR - Failed to load to cloud: Unsupported storage_type. Use 's3' or 'gcs'
